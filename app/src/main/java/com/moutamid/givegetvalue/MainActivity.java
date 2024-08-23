@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         typeSpinner.setAdapter(adapter);
 
-        // Update the UI based on the initial balance and mode
         updateUI();
 
         modeButton.setOnClickListener(new View.OnClickListener() {
@@ -99,29 +98,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGiveProcess() {
-        // Validate input and start the "Give" process
         String valueType = typeSpinner.getSelectedItem().toString();
         String valueToGive = valueEditText.getText().toString();
 
         if (valueType.isEmpty() || valueToGive.isEmpty() || Integer.parseInt(valueToGive) > currentBalance) {
-            // Handle validation error (e.g., show a toast message)
             return;
         }
 
         isGiving = true;
         updateUI();
 
-        // Turn on Bluetooth if it's off
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
             bluetoothAdapter.enable();
         }
 
-        // Generate QR code
         String qrData = "Type: " + valueType + ", Value: " + valueToGive;
         generateQRCode(qrData);
 
-        // Adjust the current balance (for demonstration purposes)
         currentBalance -= Integer.parseInt(valueToGive);
         balanceTextView.setText("Balance: " + currentBalance);
     }

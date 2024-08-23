@@ -17,7 +17,7 @@ public class MasterActivity extends AppCompatActivity {
     private TextView balanceTextView;
     private Button modeButton;
 
-    private int currentBalance = 90; // Example starting balance
+    private int currentBalance = 90;
     private boolean isReadMode = true;
 
     @Override
@@ -30,13 +30,11 @@ public class MasterActivity extends AppCompatActivity {
         balanceTextView = findViewById(R.id.balanceTextView);
         modeButton = findViewById(R.id.modeButton);
 
-        // Set up spinner options
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.type_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         typeSpinner.setAdapter(adapter);
 
-        // Update the UI based on the initial balance and mode
         updateUI();
 
         modeButton.setOnClickListener(new View.OnClickListener() {
