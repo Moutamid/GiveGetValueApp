@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">GiveGetValue</string>
+    <string-array name="type_array">
+        <item>Sand</item>
+        <item>Brick</item>
+        <item>Stone</item>
+        <item>Water</item>
+    </string-array>
+</resources>
