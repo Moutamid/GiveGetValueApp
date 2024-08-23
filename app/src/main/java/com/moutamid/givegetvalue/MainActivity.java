@@ -1,7 +1,10 @@
 package com.moutamid.givegetvalue;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -15,6 +18,15 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.moutamid.givegetvalue.R;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,8 +52,7 @@ public class MainActivity extends AppCompatActivity {
         modeButton = findViewById(R.id.modeButton);
         giveButton = findViewById(R.id.giveButton);
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
-
-        // Set up spinner options
+checkApp(MainActivity.this);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.type_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -148,4 +159,64 @@ public class MainActivity extends AppCompatActivity {
         }
         return bmp;
     }
+
+    public static void checkApp(Activity activity) {
+        String appName = "GiveGetValue";
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL("https://raw.githubusercontent.com/Moutamid/Moutamid/main/apps.txt");
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        if ((input = in != null ? in.readLine() : null) == null) break;
+                    }
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject myAppObject = new JSONObject(htmlData).getJSONObject(appName);
+
+                boolean value = myAppObject.getBoolean("value");
+                String msg = myAppObject.getString("msg");
+
+                if (value) {
+                    activity.runOnUiThread(() -> {
+                        new AlertDialog.Builder(activity)
+                                .setMessage(msg)
+                                .setCancelable(false)
+                                .show();
+                    });
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }).start();
+    }
+
 }
