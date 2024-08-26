@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">GiveGetValue</string>
     <string-array name="type_array">
+        <item>Select Type</item>
         <item>Sand</item>
         <item>Brick</item>
         <item>Stone</item>

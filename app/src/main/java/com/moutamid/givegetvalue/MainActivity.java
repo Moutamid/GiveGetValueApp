@@ -1,140 +1,262 @@
 package com.moutamid.givegetvalue;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.fxn.stash.Stash;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.moutamid.givegetvalue.R;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-
-    private EditText valueEditText;
+    private BluetoothPairingReceiver pairingReceiver = new BluetoothPairingReceiver();
+    private static final String TARGET_BLUETOOTH_MAC_ADDRESS = "D0:9C:AE:62:92:91";
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // Standard SerialPortService ID
+    private EditText valueEditText, passwordEditText;
     private Spinner typeSpinner;
     private TextView balanceTextView;
-    private Button modeButton;
-    private Button giveButton;
+    private Button modeButton, giveButton, addButton;
     private ImageView qrCodeImageView;
-
-    private int currentBalance = 90; // Example starting balance
-    private boolean isReadMode = true;
-    private boolean isGiving = false;
-
+    private int currentBalance = 0;
+    private int position_ = 0;
+    private boolean isMasterUser = false;
+    Button enterButton, userButton, masterButton, quitButton;
+    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    String valueType;
+    int valueToAdd;
+    ImageView receiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_PAIRING_REQUEST);
+        registerReceiver(pairingReceiver, filter);
+        quitButton = findViewById(R.id.quitButton);
+        receiver = findViewById(R.id.receiver);
+        userButton = findViewById(R.id.userButton);
+        enterButton = findViewById(R.id.enterButton);
+        masterButton = findViewById(R.id.masterButton);
+        passwordEditText = findViewById(R.id.passwordEditText);
+        addButton = findViewById(R.id.addButton);
         valueEditText = findViewById(R.id.valueEditText);
         typeSpinner = findViewById(R.id.typeSpinner);
         balanceTextView = findViewById(R.id.balanceTextView);
         modeButton = findViewById(R.id.modeButton);
         giveButton = findViewById(R.id.giveButton);
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
-checkApp(MainActivity.this);
+        Log.d("valueeee", currentBalance + "   " + Stash.getInt("balance", 0));
+        if (Stash.getInt("balance", 0) == 0) {
+            modeButton.setVisibility(View.VISIBLE);
+            giveButton.setVisibility(View.GONE);
+        } else {
+            modeButton.setVisibility(View.GONE);
+            giveButton.setVisibility(View.VISIBLE);
+        }
+        receiver.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scanQRCode();
+
+            }
+        });
+        quitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, MainActivity.class));
+                finish();
+            }
+        });
+//        balanceTextView.setText("Balance: " + Stash.getInt("balance", 0));
+//        typeSpinner.setEnabled(false);
+        userButton.setBackgroundResource(R.drawable.btn_bg);  // Active state background
+        masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Inactive state background
+//        valueEditText.setEnabled(Stash.getInt("balance", 0) != 0);
+        userButton.setOnClickListener(v -> {
+            userButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
+            masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Set to inactive
+            valueEditText.setVisibility(View.VISIBLE);
+            passwordEditText.setVisibility(View.GONE);
+            enterButton.setVisibility(View.GONE);
+            userButton.setEnabled(false);
+            masterButton.setEnabled(true);
+            isMasterUser = false;
+
+            addButton.setVisibility(View.GONE);
+            valueEditText.setText("");
+            typeSpinner.setEnabled(false);
+        });
+
+        masterButton.setOnClickListener(v -> {
+            masterButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
+            userButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Set to inactive
+            passwordEditText.setVisibility(View.VISIBLE);
+            valueEditText.setVisibility(View.GONE);
+            enterButton.setVisibility(View.VISIBLE);
+            masterButton.setEnabled(false);
+            userButton.setEnabled(true);
+            valueEditText.setText("");
+            isMasterUser = true;
+            modeButton.setVisibility(View.GONE);
+            typeSpinner.setEnabled(true);
+            addButton.setVisibility(View.GONE);
+            giveButton.setVisibility(View.GONE);
+            typeSpinner.setSelection(0);
+            balanceTextView.setText("Balance: 0");
+
+        });
+
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.type_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         typeSpinner.setAdapter(adapter);
-
-        updateUI();
-
-        modeButton.setOnClickListener(new View.OnClickListener() {
+        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onClick(View v) {
-                toggleMode();
-            }
-        });
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedItem = parent.getItemAtPosition(position).toString();
+                position_ = position;
+                Stash.put("position", position);
+                if (position != 0) {
+                    if (isMasterUser && position > 0) { // Ensure a valid type is selected
+//                                String valueType = parent.getItemAtPosition(position).toString();
+                        valueType = selectedItem;
+                        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
+                        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+                        Log.d("BalanceDisplay", "Balance for " + valueType + ": " + categoryBalance);
 
-        giveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isGiving) {
-                    startGiveProcess();
+                        String valueToAddStr = valueEditText.getText().toString();
+                        if (!valueToAddStr.isEmpty()) {
+                            valueToAdd = Integer.parseInt(valueToAddStr);
+                            addValueToBalance(valueType, valueToAdd);
+                        }
+                    } else {
+                        String valueType = selectedItem;
+                        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
+                        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+                        Log.d("BalanceDisplay", "Balance for " + valueType + ": " + categoryBalance);
+                        if (Stash.getInt(valueType + "_balance", 0) == 0) {
+                            modeButton.setVisibility(View.VISIBLE);
+                            giveButton.setVisibility(View.GONE);
+                        } else {
+                            modeButton.setVisibility(View.GONE);
+                            giveButton.setVisibility(View.VISIBLE);
+                        }
+                    }
                 } else {
-                    quitGiveProcess();
+                    Toast.makeText(MainActivity.this, "Please select any type", Toast.LENGTH_SHORT).show();
                 }
             }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Handle the case where no item is selected
+            }
         });
-    }
+        if (isMasterUser) {
+            typeSpinner.setSelection(0);
+            balanceTextView.setText("Balance: 0");
 
-    private void updateUI() {
-        balanceTextView.setText("Balance: " + currentBalance);
-
-        if (currentBalance == 0) {
-            valueEditText.setEnabled(false);
-            giveButton.setEnabled(false);
         } else {
-            valueEditText.setEnabled(true);
-            giveButton.setEnabled(true);
+            typeSpinner.setSelection(Stash.getInt("position"));
         }
-
-        if (isReadMode) {
-            modeButton.setText("Read");
-        } else {
-            modeButton.setText("Write");
-        }
-
-        if (isGiving) {
-            giveButton.setText("Quit");
-        } else {
-            giveButton.setText("Give");
-        }
-    }
-
-    private void toggleMode() {
-        isReadMode = !isReadMode;
-        updateUI();
+//        typeSpinner.setId(position);
+        giveButton.setOnClickListener(v -> startGiveProcess());
+//        addButton.setOnClickListener(v -> addValueToBalance(valueType, valueToAdd));
+        enterButton.setOnClickListener(view -> addPasswordAsMaster());
     }
 
     private void startGiveProcess() {
         String valueType = typeSpinner.getSelectedItem().toString();
         String valueToGive = valueEditText.getText().toString();
-
-        if (valueType.isEmpty() || valueToGive.isEmpty() || Integer.parseInt(valueToGive) > currentBalance) {
-            return;
-        }
-
-        isGiving = true;
-        updateUI();
-
+        giveButton.setVisibility(View.GONE);
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
             bluetoothAdapter.enable();
         }
+        BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter bluetoothAdapter1 = bluetoothManager.getAdapter();
+        if (bluetoothAdapter1 != null) {
+            // You won't get the MAC address, but you can still work with the adapter
+            String macAddress = bluetoothAdapter1.getAddress(); // Likely to be null on newer Android versions
+            Log.d("Bluetooth MAC", "Bluetooth MAC Address: " + macAddress);
 
+        }
+
+//        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(TARGET_BLUETOOTH_MAC_ADDRESS);
+//        new ConnectBluetoothTask(device).execute();
         String qrData = "Type: " + valueType + ", Value: " + valueToGive;
         generateQRCode(qrData);
-
+        currentBalance = Stash.getInt("balance", 0);
         currentBalance -= Integer.parseInt(valueToGive);
+        Stash.put("balance", currentBalance);
         balanceTextView.setText("Balance: " + currentBalance);
     }
 
-    private void quitGiveProcess() {
-        isGiving = false;
-        qrCodeImageView.setVisibility(View.GONE);
-        updateUI();
+    private class ConnectBluetoothTask extends AsyncTask<Void, Void, Boolean> {
+        private final BluetoothDevice device;
+        private BluetoothSocket bluetoothSocket;
+
+        ConnectBluetoothTask(BluetoothDevice device) {
+            this.device = device;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            try {
+                bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+                bluetoothAdapter.cancelDiscovery();
+                bluetoothSocket.connect();
+                return true;
+            } catch (IOException e) {
+                Log.e("BluetoothConnection", "Connection failed", e);
+                try {
+                    bluetoothSocket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", int.class).invoke(device, 1);
+                    bluetoothSocket.connect();
+                    return true;
+                } catch (Exception e2) {
+                    Log.e("BluetoothConnection", "Could not connect using reflection", e2);
+                    try {
+                        bluetoothSocket.close();
+                    } catch (IOException closeException) {
+                        Log.e("BluetoothConnection", "Could not close the client socket", closeException);
+                    }
+                    return false;
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                Log.d("BluetoothConnection", "Connected successfully");
+            } else {
+                Log.d("BluetoothConnection", "Failed to connect");
+            }
+        }
     }
 
     private void generateQRCode(String data) {
@@ -143,6 +265,7 @@ checkApp(MainActivity.this);
             Bitmap bitmap = toBitmap(writer.encode(data, BarcodeFormat.QR_CODE, 512, 512));
             qrCodeImageView.setImageBitmap(bitmap);
             qrCodeImageView.setVisibility(View.VISIBLE);
+            quitButton.setVisibility(View.VISIBLE);
         } catch (WriterException e) {
             e.printStackTrace();
         }
@@ -160,63 +283,77 @@ checkApp(MainActivity.this);
         return bmp;
     }
 
-    public static void checkApp(Activity activity) {
-        String appName = "GiveGetValue";
-
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL("https://raw.githubusercontent.com/Moutamid/Moutamid/main/apps.txt");
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        if ((input = in != null ? in.readLine() : null) == null) break;
-                    }
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-
-            try {
-                JSONObject myAppObject = new JSONObject(htmlData).getJSONObject(appName);
-
-                boolean value = myAppObject.getBoolean("value");
-                String msg = myAppObject.getString("msg");
-
-                if (value) {
-                    activity.runOnUiThread(() -> {
-                        new AlertDialog.Builder(activity)
-                                .setMessage(msg)
-                                .setCancelable(false)
-                                .show();
-                    });
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        }).start();
+    private void addValueAsMaster() {
+        String valueType = typeSpinner.getSelectedItem().toString();
+        String valueToAdd = valueEditText.getText().toString();
+        if (!isMasterUser || valueToAdd.isEmpty()) {
+            return;
+        }
+        if (position_ == 0) {
+            Toast.makeText(this, "Please select any type", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        currentBalance += Integer.parseInt(valueToAdd);
+        balanceTextView.setText("Balance: " + currentBalance);
+        Stash.put("balance", currentBalance);
+        Log.d("valueeee", currentBalance + "   " + Stash.getInt("balance", 0));
     }
 
+    private void addPasswordAsMaster() {
+        String masterPassword = "1234";
+        String enteredPassword = passwordEditText.getText().toString();
+        if (!enteredPassword.equals(masterPassword)) {
+            Toast.makeText(this, "Login failed, Try Again", Toast.LENGTH_SHORT).show();
+            passwordEditText.setText("");
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
+        Toast.makeText(this, "Login Successfully", Toast.LENGTH_SHORT).show();
+        passwordEditText.setText("");
+        valueEditText.setVisibility(View.VISIBLE);
+        passwordEditText.setVisibility(View.GONE);
+        enterButton.setVisibility(View.GONE);
+        addButton.setVisibility(View.VISIBLE);
+        modeButton.setVisibility(View.GONE);
+        valueEditText.setEnabled(true);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(pairingReceiver);
+    }
+
+    private void addValueToBalance(String valueType, int valueToAdd) {
+        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
+        Log.d("BalanceUpdate", "1   " + categoryBalance);
+        categoryBalance += valueToAdd;
+        Log.d("BalanceUpdate", "2   " + categoryBalance);
+        Stash.put(valueType + "_balance", categoryBalance);
+        Log.d("BalanceUpdate", "3   " + Stash.getInt(valueType + "_balance", 0));
+        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+        Log.d("BalanceUpdate", "Updated Balance for " + valueType + ": " + categoryBalance);
+    }
+
+    private void scanQRCode() {
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setPrompt("Scan a QR code");
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+        integrator.setBeepEnabled(true);
+        integrator.setBarcodeImageEnabled(true);
+        integrator.initiateScan();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() != null) {
+                String scannedText = result.getContents();
+                Toast.makeText(this, "Scanned: " + scannedText, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 }

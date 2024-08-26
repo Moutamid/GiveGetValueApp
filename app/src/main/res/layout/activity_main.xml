@@ -1,69 +1,176 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".MainActivity">
 
-    <!-- Value EditText -->
+    <ImageView
+        android:id="@+id/receiver"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
+        android:src="@drawable/camera" />
+    <LinearLayout
+android:id="@+id/btn_lyt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="70dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/userButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Giver"
+            android:textColor="@color/white"
+            android:layout_weight="1"
+            android:background="@drawable/btn_bg"
+            android:layout_margin="8dp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/masterButton"
+            android:layout_weight="1"
+            android:layout_margin="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Master User"
+            android:textColor="@color/white"
+
+            android:background="@drawable/btn_bg_lght" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/lytEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_lyt"
+        android:orientation="vertical">
+    <EditText
+        android:id="@+id/passwordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Enter Master Password"
+        android:inputType="textPassword"
+        android:visibility="gone"
+        android:padding="9dp"
+
+
+        android:background="@drawable/edit_bg"
+        android:layout_marginBottom="16dp"/>
+
     <EditText
         android:id="@+id/valueEditText"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:padding="10dp"
-        android:hint="Enter Value"
-        android:inputType="number"
+        android:padding="9dp"
+        android:hint="Enter value"
         android:background="@drawable/edit_bg"
-        android:enabled="true"/>
+        android:inputType="number"
+        android:layout_marginBottom="16dp" />
 
-    <!-- Type Spinner -->
+    </LinearLayout>
+
+    <!-- Spinner for Value Type -->
     <Spinner
         android:id="@+id/typeSpinner"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
+        android:layout_height="50dp"
+        android:background="@drawable/btn_bg_lght"
+        android:backgroundTint="#E9E9E9"
+        android:layout_below="@id/lytEditText"
+        android:layout_marginTop="16dp"
+        android:padding="5dp"
+        android:layout_marginBottom="16dp" />
 
-    <!-- Current Balance TextView -->
+    <!-- Balance Display -->
     <TextView
         android:id="@+id/balanceTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="90dp"
-        android:layout_marginTop="16dp"
-        android:layout_gravity="center"
-        android:background="@drawable/btn_bg"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/typeSpinner"
         android:text="Balance: 0"
-        android:textColor="@color/white"
-        android:padding="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@drawable/btn_bg"
         android:gravity="center"
-        android:textSize="14sp"/>
+        android:padding="10dp"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"/>
 
-    <!-- Mode Button -->
+    <!-- Mode Toggle Button -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/modeButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@color/white"
+        android:layout_height="50dp"
+        android:layout_below="@id/balanceTextView"
+        android:text="Read"
         android:background="@drawable/btn_bg"
-        android:text="Read"/>
+        android:textColor="@color/white"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="16dp" />
+  <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/enterButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/balanceTextView"
+        android:text="Enter"
+      android:visibility="gone"
+        android:background="@drawable/btn_bg"
+        android:textColor="@color/white"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="16dp" />
 
     <!-- Give Button -->
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/giveButton"
+        android:layout_below="@id/modeButton"
+        android:text="Give"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@color/black"
+        android:visibility="gone"
         android:background="@drawable/btn_bg"
-        android:text="Give"
-        android:enabled="false"/>
+        android:textColor="@color/white"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="16dp"/>
 
-    <!-- QR Code ImageView -->
+    <!-- Add Button for Master User -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/addButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/balanceTextView"
+        android:text="Add"
+        android:visibility="gone"
+        android:background="@drawable/btn_bg"
+        android:textColor="@color/white"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- QR Code Display -->
     <ImageView
         android:id="@+id/qrCodeImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_width="156dp"
+        android:layout_height="156dp"
+        android:layout_below="@id/giveButton"
+        android:layout_centerHorizontal="true"
         android:visibility="gone"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/quitButton"
+        android:layout_below="@id/qrCodeImageView"
+        android:text="Quit"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/btn_bg"
+        android:backgroundTint="#CCA3A3"
+        android:textColor="#000"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="16dp"/>
 
-</LinearLayout>
+</RelativeLayout>
