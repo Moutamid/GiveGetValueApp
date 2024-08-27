@@ -12,36 +12,37 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
         android:src="@drawable/camera" />
+
     <LinearLayout
-android:id="@+id/btn_lyt"
+        android:id="@+id/btn_lyt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="70dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="16dp">
+        android:layout_marginTop="70dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/userButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Giver"
-            android:textColor="@color/white"
+            android:layout_margin="8dp"
             android:layout_weight="1"
             android:background="@drawable/btn_bg"
-            android:layout_margin="8dp" />
+            android:text="Giver"
+            android:textColor="@color/white" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/masterButton"
-            android:layout_weight="1"
-            android:layout_margin="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_bg_lght"
             android:text="Master User"
-            android:textColor="@color/white"
 
-            android:background="@drawable/btn_bg_lght" />
+            android:textColor="@color/white" />
     </LinearLayout>
 
     <LinearLayout
@@ -50,28 +51,29 @@ android:id="@+id/btn_lyt"
         android:layout_height="wrap_content"
         android:layout_below="@+id/btn_lyt"
         android:orientation="vertical">
-    <EditText
-        android:id="@+id/passwordEditText"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Enter Master Password"
-        android:inputType="textPassword"
-        android:visibility="gone"
-        android:padding="9dp"
+
+        <EditText
+            android:id="@+id/passwordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/edit_bg"
+            android:hint="Enter Master Password"
+            android:inputType="textPassword"
 
 
-        android:background="@drawable/edit_bg"
-        android:layout_marginBottom="16dp"/>
+            android:padding="9dp"
+            android:visibility="gone" />
 
-    <EditText
-        android:id="@+id/valueEditText"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="9dp"
-        android:hint="Enter value"
-        android:background="@drawable/edit_bg"
-        android:inputType="number"
-        android:layout_marginBottom="16dp" />
+        <EditText
+            android:id="@+id/valueEditText"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/edit_bg"
+            android:hint="Enter value"
+            android:inputType="number"
+            android:padding="9dp" />
 
     </LinearLayout>
 
@@ -80,28 +82,28 @@ android:id="@+id/btn_lyt"
         android:id="@+id/typeSpinner"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="@drawable/btn_bg_lght"
-        android:backgroundTint="#E9E9E9"
         android:layout_below="@id/lytEditText"
         android:layout_marginTop="16dp"
-        android:padding="5dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/btn_bg_lght"
+        android:backgroundTint="#E9E9E9"
+        android:padding="5dp" />
 
     <!-- Balance Display -->
     <TextView
         android:id="@+id/balanceTextView"
         android:layout_width="130dp"
         android:layout_height="130dp"
-        android:layout_centerHorizontal="true"
         android:layout_below="@id/typeSpinner"
-        android:text="Balance: 0"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="15dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/btn_bg"
         android:gravity="center"
         android:padding="10dp"
+        android:text="Balance: 0"
         android:textColor="@color/white"
-        android:textSize="16sp"
-        android:layout_marginBottom="16dp"/>
+        android:textSize="16sp" />
 
     <!-- Mode Toggle Button -->
     <androidx.appcompat.widget.AppCompatButton
@@ -109,35 +111,36 @@ android:id="@+id/btn_lyt"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_below="@id/balanceTextView"
-        android:text="Read"
-        android:background="@drawable/btn_bg"
-        android:textColor="@color/white"
         android:layout_marginTop="40dp"
-        android:layout_marginBottom="16dp" />
-  <androidx.appcompat.widget.AppCompatButton
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/btn_bg"
+        android:text="Read"
+        android:textColor="@color/white" />
+
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/enterButton"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_below="@id/balanceTextView"
-        android:text="Enter"
-      android:visibility="gone"
-        android:background="@drawable/btn_bg"
-        android:textColor="@color/white"
         android:layout_marginTop="40dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/btn_bg"
+        android:text="Enter"
+        android:textColor="@color/white"
+        android:visibility="gone" />
 
     <!-- Give Button -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/giveButton"
-        android:layout_below="@id/modeButton"
-        android:text="Give"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:background="@drawable/btn_bg"
-        android:textColor="@color/white"
+        android:layout_below="@id/modeButton"
         android:layout_marginTop="40dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/btn_bg"
+        android:text="Give"
+        android:textColor="@color/white"
+        android:visibility="gone" />
 
     <!-- Add Button for Master User -->
     <androidx.appcompat.widget.AppCompatButton
@@ -145,12 +148,12 @@ android:id="@+id/btn_lyt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/balanceTextView"
-        android:text="Add"
-        android:visibility="gone"
-        android:background="@drawable/btn_bg"
-        android:textColor="@color/white"
         android:layout_marginTop="40dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/btn_bg"
+        android:text="Add"
+        android:textColor="@color/white"
+        android:visibility="gone" />
 
     <!-- QR Code Display -->
     <ImageView
@@ -159,18 +162,19 @@ android:id="@+id/btn_lyt"
         android:layout_height="156dp"
         android:layout_below="@id/giveButton"
         android:layout_centerHorizontal="true"
-        android:visibility="gone"/>
+        android:visibility="gone" />
+
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/quitButton"
-        android:layout_below="@id/qrCodeImageView"
-        android:text="Quit"
-        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/qrCodeImageView"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/btn_bg"
         android:backgroundTint="#CCA3A3"
+        android:text="Quit"
         android:textColor="#000"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="16dp"/>
+        android:visibility="gone" />
 
 </RelativeLayout>

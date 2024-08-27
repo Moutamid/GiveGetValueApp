@@ -26,11 +26,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.fxn.stash.Stash;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -105,15 +109,16 @@ public class MainActivity extends AppCompatActivity {
             userButton.setEnabled(false);
             masterButton.setEnabled(true);
             isMasterUser = false;
+            modeButton.setVisibility(View.VISIBLE);
 
             addButton.setVisibility(View.GONE);
             valueEditText.setText("");
-            typeSpinner.setEnabled(false);
+//            typeSpinner.setEnabled(false);
         });
 
         masterButton.setOnClickListener(v -> {
-            masterButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
-            userButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Set to inactive
+            masterButton.setBackgroundResource(R.drawable.btn_bg);
+            userButton.setBackgroundResource(R.drawable.btn_bg_lght);
             passwordEditText.setVisibility(View.VISIBLE);
             valueEditText.setVisibility(View.GONE);
             enterButton.setVisibility(View.VISIBLE);
@@ -167,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 } else {
-                    Toast.makeText(MainActivity.this, "Please select any type", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(MainActivity.this, "Please select any type", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -185,6 +190,13 @@ public class MainActivity extends AppCompatActivity {
         }
 //        typeSpinner.setId(position);
         giveButton.setOnClickListener(v -> startGiveProcess());
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, MainActivity.class));
+                finish();
+            }
+        });
 //        addButton.setOnClickListener(v -> addValueToBalance(valueType, valueToAdd));
         enterButton.setOnClickListener(view -> addPasswordAsMaster());
     }
@@ -199,21 +211,28 @@ public class MainActivity extends AppCompatActivity {
         }
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter1 = bluetoothManager.getAdapter();
+        String macAddress = "abc";
         if (bluetoothAdapter1 != null) {
-            // You won't get the MAC address, but you can still work with the adapter
-            String macAddress = bluetoothAdapter1.getAddress(); // Likely to be null on newer Android versions
+            macAddress = bluetoothAdapter1.getName(); // Likely to be null on newer Android versions
             Log.d("Bluetooth MAC", "Bluetooth MAC Address: " + macAddress);
 
         }
 
 //        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(TARGET_BLUETOOTH_MAC_ADDRESS);
 //        new ConnectBluetoothTask(device).execute();
-        String qrData = "Type: " + valueType + ", Value: " + valueToGive;
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = formatter.format(date);
+        String qrData = "Type: " + position_ + ", Value: " + valueToGive + ", Device: " + macAddress+", Timestamp: " + formattedDate;
         generateQRCode(qrData);
-        currentBalance = Stash.getInt("balance", 0);
+        Stash.getInt(valueType + "_balance");
+
+        currentBalance = Stash.getInt(valueType + "_balance");
+        ;
         currentBalance -= Integer.parseInt(valueToGive);
-        Stash.put("balance", currentBalance);
-        balanceTextView.setText("Balance: " + currentBalance);
+
+        Stash.put(valueType + "_balance", currentBalance);
+        balanceTextView.setText("Balance for " + valueType + ": " + currentBalance);
     }
 
     private class ConnectBluetoothTask extends AsyncTask<Void, Void, Boolean> {
@@ -271,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap toBitmap(com.google.zxing.common.BitMatrix matrix) {
+    private Bitmap toBitmap(BitMatrix matrix) {
         int width = matrix.getWidth();
         int height = matrix.getHeight();
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
@@ -290,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if (position_ == 0) {
-            Toast.makeText(this, "Please select any type", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "Please select any type", Toast.LENGTH_SHORT).show();
             return;
         }
         currentBalance += Integer.parseInt(valueToAdd);
@@ -353,6 +372,60 @@ public class MainActivity extends AppCompatActivity {
             if (result.getContents() != null) {
                 String scannedText = result.getContents();
                 Toast.makeText(this, "Scanned: " + scannedText, Toast.LENGTH_LONG).show();
+modeButton.setVisibility(View.VISIBLE);
+                String[] parts = scannedText.split(", ");
+                String extractedType = "";
+                String extractedValue = "";
+                String extractedDevice = "";
+                String extractedTimestamp = "";
+                for (String part : parts) {
+                    if (part.startsWith("Type: ")) {
+                        extractedType = part.substring("Type: ".length());
+                    } else if (part.startsWith("Value: ")) {
+                        extractedValue = part.substring("Value: ".length());
+                    } else if (part.startsWith("Device: ")) {
+                        extractedDevice = part.substring("Device: ".length());
+                    } else if (part.startsWith("Timestamp: ")) {
+                        extractedTimestamp = part.substring("Timestamp: ".length());
+                    }
+                }
+                valueEditText.setText(extractedValue);
+                typeSpinner.setSelection(Integer.parseInt(extractedType));
+                balanceTextView.setText("Balance: "+ extractedValue);
+                System.out.println("Device: " + extractedDevice);
+         giveButton.setVisibility(View.GONE);       System.out.println("Timestamp: " + extractedTimestamp);
+                modeButton.setText("Get");
+                BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
+                    bluetoothAdapter.enable();
+                }
+
+// Your target device name
+                String targetDeviceName = extractedDevice;
+
+// Get the list of paired devices
+                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+                BluetoothDevice targetDevice = null;
+
+                for (BluetoothDevice device : pairedDevices) {
+                    if (device.getName().equals(targetDeviceName)) {
+                        targetDevice = device;
+                        break;
+                    }
+                }
+
+                if (targetDevice != null) {
+                    try {
+                        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+                        BluetoothSocket bluetoothSocket = targetDevice.createRfcommSocketToServiceRecord(uuid);
+                        bluetoothSocket.connect();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("Device not found!");
+                }
+
             }
         }
     }
