@@ -11,6 +11,7 @@
         android:layout_height="40dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
+        android:visibility="gone"
         android:src="@drawable/camera" />
 
     <LinearLayout
@@ -21,6 +22,8 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="70dp"
         android:layout_marginBottom="16dp"
+        android:visibility="gone"
+
         android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatButton
@@ -70,6 +73,7 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginBottom="16dp"
+            android:layout_marginTop="50dp"
             android:background="@drawable/edit_bg"
             android:hint="Enter value"
             android:inputType="number"
@@ -99,79 +103,79 @@
         android:layout_marginTop="15dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/btn_bg"
+        android:visibility="gone"
+
         android:gravity="center"
         android:padding="10dp"
         android:text="Balance: 0"
         android:textColor="@color/white"
         android:textSize="16sp" />
 
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:layout_below="@id/balanceTextView"
-
-    >
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/readButton"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_bg"
-        android:text="Read"
-        android:visibility="gone"
-
-        android:textColor="@color/white" />
-  <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/requestButton"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_bg"
-        android:text="Request"
-      android:visibility="gone"
-
-      android:textColor="@color/white" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/enterButton"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_below="@id/balanceTextView"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_bg"
-        android:text="Enter"
-        android:visibility="gone"
-        android:textColor="@color/white"
-    />
-
-    <!-- Give Button -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/giveButton"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_bg"
-        android:text="Give"
-        android:visibility="gone"
-
-        android:textColor="@color/white"
-        />
-
-    <!-- Add Button for Master User -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/addButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_below="@id/balanceTextView"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_bg"
-        android:text="Add"
-        android:visibility="gone"
 
-        android:textColor="@color/white"
-      />
-</LinearLayout>
+        >
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/readButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_bg"
+            android:text="Read"
+            android:visibility="gone"
+
+            android:textColor="@color/white" />
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/requestButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_bg"
+            android:text="Request"
+            android:textColor="@color/white" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/enterButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@id/balanceTextView"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_bg"
+            android:text="Enter"
+            android:visibility="gone"
+            android:textColor="@color/white"
+            />
+
+        <!-- Give Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/giveButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_bg"
+            android:text="Give"
+            android:visibility="gone"
+
+            android:textColor="@color/white"
+            />
+
+        <!-- Add Button for Master User -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/addButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/balanceTextView"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_bg"
+            android:text="Add"
+            android:visibility="gone"
+
+            android:textColor="@color/white"
+            />
+    </LinearLayout>
     <!-- QR Code Display -->
     <ImageView
         android:id="@+id/qrCodeImageView"
@@ -179,7 +183,7 @@
         android:layout_height="156dp"
         android:layout_below="@id/balanceTextView"
         android:layout_centerHorizontal="true"
-      />
+        />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/quitButton"

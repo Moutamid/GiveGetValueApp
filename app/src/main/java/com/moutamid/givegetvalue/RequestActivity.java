@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class RequestActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "AppPrefs";
     private static final String USER_ID_KEY = "UserID";
     private BluetoothPairingReceiver pairingReceiver = new BluetoothPairingReceiver();
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_request);
         String userId = getUserId(this);
         Log.d("UserID", userId + "  ID");
         try {
@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     // Handle the received message
                     String receivedMessage = new String(characteristic.getValue());
-                    Toast.makeText(MainActivity.this, "Received Message: " + receivedMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(RequestActivity.this, "Received Message: " + receivedMessage, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -169,14 +169,12 @@ public class MainActivity extends AppCompatActivity {
         quitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, MainActivity.class));
-                finish();
+                    finish();
             }
         });
         userButton.setBackgroundResource(R.drawable.btn_bg);  // Active state background
         masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Inactive state background
-        readButton.setVisibility(View.VISIBLE);
-        requestButton.setVisibility(View.VISIBLE);
+
 
         userButton.setOnClickListener(v -> {
             userButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
@@ -284,19 +282,40 @@ public class MainActivity extends AppCompatActivity {
                         int valueToAdd = Integer.parseInt(valueToAddStr);
                         addValueToBalance(valueType, valueToAdd);
                     } else {
-                        Toast.makeText(MainActivity.this, "Please enter a value to add", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RequestActivity.this, "Please enter a value to add", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(MainActivity.this, "Please select a type", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RequestActivity.this, "Please select a type", Toast.LENGTH_SHORT).show();
                 }
             }
         });
         requestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, RequestActivity.class));
+                String valueToGive = valueEditText.getText().toString();
+                if (valueToGive.isEmpty()) {
+                    Toast.makeText(RequestActivity.this, "Please enter some value to request", Toast.LENGTH_SHORT).show();
+                    return;
+                }     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
+                    bluetoothAdapter.enable();
+                }
+                BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                BluetoothAdapter bluetoothAdapter1 = bluetoothManager.getAdapter();
+                String macAddress = "abc";
+                if (bluetoothAdapter1 != null) {
+                    macAddress = bluetoothAdapter1.getName(); // Likely to be null on newer Android versions
+                    Log.d("Bluetooth MAC", "Bluetooth MAC Address: " + macAddress);
+
+                }
+                Date date = new Date();
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String formattedDate = formatter.format(date);
+                String qrData = "Type: " + position_ + ", Value: " + valueEditText.getText().toString() + ", Device: " + macAddress + ", Timestamp: " + formattedDate;
+                generateQRCode(qrData);
             }
         });
+
 //        addButton.setOnClickListener(v -> addValueToBalance(valueType, valueToAdd));
         enterButton.setOnClickListener(view -> addPasswordAsMaster());
     }
@@ -333,11 +352,10 @@ public class MainActivity extends AppCompatActivity {
         generateQRCode(qrData);
 
 //        TODO after confirmation
-        currentBalance = Stash.getInt(valueType + "_balance");
-        currentBalance -= Integer.parseInt(valueToGive);
-        Stash.put(valueType + "_balance", currentBalance);
-        balanceTextView.setText("Balance for " + valueType + ": " + currentBalance);
-        quitButton.setEnabled(true);
+//        currentBalance = Stash.getInt(valueType + "_balance");
+//        currentBalance -= Integer.parseInt(valueToGive);
+//        Stash.put(valueType + "_balance", currentBalance);
+//        balanceTextView.setText("Balance for " + valueType + ": " + currentBalance);
     }
 
 
@@ -389,7 +407,7 @@ public class MainActivity extends AppCompatActivity {
         if (!isMasterPassword(enteredPassword)) {
             Toast.makeText(this, "Login failed, Try Again", Toast.LENGTH_SHORT).show();
             passwordEditText.setText("");
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(new Intent(this, RequestActivity.class));
             finish();
             return;
         }
@@ -398,6 +416,7 @@ public class MainActivity extends AppCompatActivity {
         valueEditText.setVisibility(View.VISIBLE);
         passwordEditText.setVisibility(View.GONE);
         enterButton.setVisibility(View.GONE);
+
         readButton.setVisibility(View.VISIBLE);
         typeSpinner.setEnabled(true);
         addButton.setVisibility(View.VISIBLE);
@@ -425,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("BalanceUpdate", "3   " + Stash.getInt(valueType + "_balance", 0));
         balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
         Log.d("BalanceUpdate", "Updated Balance for " + valueType + ": " + categoryBalance);
-        startActivity(new Intent(this, MainActivity.class));
+        startActivity(new Intent(this, RequestActivity.class));
         finish();
     }
 
@@ -463,18 +482,12 @@ public class MainActivity extends AppCompatActivity {
                         extractedTimestamp = part.substring("Timestamp: ".length());
                     }
                 }
-
-                currentBalance = Stash.getInt(extractedType + "_balance");
-                currentBalance += Integer.parseInt(extractedValue);
-                Stash.put(extractedType + "_balance", currentBalance);
-                balanceTextView.setText("Balance for " + extractedType + ": " + currentBalance);
                 valueEditText.setText(extractedValue);
                 typeSpinner.setSelection(Integer.parseInt(extractedType));
-//                balanceTextView.setText("Balance: " + extractedValue);
+                balanceTextView.setText("Balance: " + extractedValue);
                 System.out.println("Device: " + extractedDevice);
                 giveButton.setVisibility(View.GONE);
                 System.out.println("Timestamp: " + extractedTimestamp);
-
 //                readButton.setText("Get");
                 BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 BluetoothDevice targetDevice = null;
@@ -487,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 // Find the target Bluetooth device
-                String targetDeviceName = extractedDevice;  // Change this to your actual device name
+                String targetDeviceName = "V2102";  // Change this to your actual device name
                 Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
                 for (BluetoothDevice device : pairedDevices) {
                     Log.d("PairedDevice", "Device Name: " + device.getName());
@@ -500,7 +513,7 @@ public class MainActivity extends AppCompatActivity {
                 if (targetDevice != null) {
                     // Connect to the GATT server
                     BluetoothDevice finalTargetDevice = targetDevice;
-                    gatt = targetDevice.connectGatt(MainActivity.this, false, new BluetoothGattCallback() {
+                    gatt = targetDevice.connectGatt(RequestActivity.this, false, new BluetoothGattCallback() {
                         @Override
                         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                             super.onConnectionStateChange(gatt, status, newState);
@@ -509,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
                             runOnUiThread(() -> {
                                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                                     Log.d("Bluetooth", "Connected to GATT server.");
-                                    Toast.makeText(MainActivity.this, "Connected to GATT server.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(RequestActivity.this, "Connected to GATT server.", Toast.LENGTH_SHORT).show();
 
                                     // Delay service discovery for 1 second
                                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -519,12 +532,12 @@ public class MainActivity extends AppCompatActivity {
 
                                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                                     Log.d("Bluetooth", "Disconnected from GATT server.");
-                                    Toast.makeText(MainActivity.this, "Disconnected from GATT server.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(RequestActivity.this, "Disconnected from GATT server.", Toast.LENGTH_SHORT).show();
                                 }
 
                                 if (status == BluetoothGatt.GATT_FAILURE) {
                                     Log.e("Bluetooth", "GATT Failure, Status: " + status);
-                                    Toast.makeText(MainActivity.this, "GATT Failure, Status: " + status, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(RequestActivity.this, "GATT Failure, Status: " + status, Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
