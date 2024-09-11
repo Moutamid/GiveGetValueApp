@@ -256,6 +256,7 @@ public class RequestActivity extends AppCompatActivity implements AdapterView.On
             public void onClick(View view) {
                 if (Stash.getInt(valueType + "_balance") > 0) {
                     confirmation_lyt.setVisibility(View.GONE);
+
                     byte[] bytes = "yes".getBytes(Charset.defaultCharset());
                     mBluetoothConnection.write(bytes);
                     Stash.put(valueType + "_balance", currentBalance);

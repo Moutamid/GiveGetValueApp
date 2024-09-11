@@ -61,6 +61,7 @@ import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -83,11 +84,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private boolean isReceiver3Registered = false;
     private boolean isReceiver4Registered = false;
 
-    // Create a BroadcastReceiver for ACTION_FOUND
     private final BroadcastReceiver mBroadcastReceiver1 = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            // When discovery finds a device
             if (action.equals(mBluetoothAdapter.ACTION_STATE_CHANGED)) {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, mBluetoothAdapter.ERROR);
 
@@ -109,10 +108,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     };
 
-    /**
-     * Broadcast Receiver for changes made to bluetooth states such as:
-     * 1) Discoverability mode on/off or expire.
-     */
     private final BroadcastReceiver mBroadcastReceiver2 = new BroadcastReceiver() {
 
         @Override
@@ -148,10 +143,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     };
 
 
-    /**
-     * Broadcast Receiver for listing devices that are not yet paired
-     * -Executed by btnDiscover() method.
-     */
     @SuppressLint("MissingPermission")
     private BroadcastReceiver mBroadcastReceiver3 = new BroadcastReceiver() {
         @Override
@@ -296,20 +287,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 //                }
             }
         });
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        registerReceiver(mBroadcastReceiver4, filter);
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        lvNewDevices.setOnItemClickListener(MainActivity.this);
-        if (mBluetoothAdapter == null) {
-            Log.d(TAG, "enableDisableBT: Does not have BT capabilities.");
-        }
-        if (!mBluetoothAdapter.isEnabled()) {
-            Log.d(TAG, "enableDisableBT: enabling BT.");
-            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivity(enableBTIntent);
-            IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-            registerReceiver(mBroadcastReceiver1, BTIntent);
-        }
+       checkBluetoothPermissions();
         try {
             masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
             SharedPreferences sharedPreferences = EncryptedSharedPreferences.create("master_passwords_prefs", masterKeyAlias, this, EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
@@ -418,8 +396,6 @@ checkApp(MainActivity.this);
             balanceTextView.setText("Balance: 0");
 
         });
-        btnEnableDisable_Discoverable();
-        btnDiscover();
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.type_array, android.R.layout.simple_spinner_item);
@@ -472,7 +448,7 @@ checkApp(MainActivity.this);
             typeSpinner.setSelection(Stash.getInt("position"));
         }
 //        typeSpinner.setId(position);
-        giveButton.setOnClickListener(v -> checkBluetoothPermissions());
+        giveButton.setOnClickListener(v -> checkBluetoothPermissions_());
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -761,6 +737,15 @@ checkApp(MainActivity.this);
                 Toast.makeText(this, "Bluetooth permissions are required to scan and connect to nearby devices.", Toast.LENGTH_SHORT).show();
             }
         }
+        if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, enable Bluetooth
+                enableBluetooth();
+            } else {
+                // Permission denied
+                Toast.makeText(this, "Bluetooth permissions are required", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
     public static String getUserId(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -776,7 +761,7 @@ checkApp(MainActivity.this);
         return userId;
     }
 
-    private void checkBluetoothPermissions() {
+    private void checkBluetoothPermissions_() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
@@ -920,6 +905,57 @@ checkApp(MainActivity.this);
             }
 
         }).start();
+    }
+
+    private void checkBluetoothPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // API 31+
+            List<String> permissions = new ArrayList<>();
+
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+            }
+
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            }
+
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+
+            if (!permissions.isEmpty()) {
+                requestPermissions(permissions.toArray(new String[0]), REQUEST_BLUETOOTH_PERMISSIONS);
+            } else {
+                // Permissions already granted
+                enableBluetooth(); // Call your function that handles Bluetooth
+            }
+        } else {
+            // For older versions, no need for runtime permissions
+            enableBluetooth();
+        }
+    }
+
+
+    private void enableBluetooth() {
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            Log.d(TAG, "enableDisableBT: Does not have BT capabilities.");
+            return;
+        }
+        if (!mBluetoothAdapter.isEnabled()) {
+            Log.d(TAG, "enableDisableBT: enabling BT.");
+            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
+        }
+        // Register Bluetooth state change receivers after permissions are granted
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        registerReceiver(mBroadcastReceiver4, filter);  // Make sure this receiver is properly defined
+        lvNewDevices.setOnItemClickListener(MainActivity.this);
+        IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(mBroadcastReceiver1, BTIntent);  //
+        btnEnableDisable_Discoverable();
+        btnDiscover();
+
     }
 
 }
