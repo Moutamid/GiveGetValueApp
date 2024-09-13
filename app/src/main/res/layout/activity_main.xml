@@ -272,8 +272,8 @@
         android:background="@drawable/btn_bg_lght"
         android:backgroundTint="#C8C8C8"
         android:orientation="vertical"
-        android:padding="20dp"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:padding="20dp">
 
         <TextView
             android:id="@+id/incomingText"
@@ -300,6 +300,17 @@
             android:layout_weight="1"
             android:background="@drawable/btn_bg"
             android:text="Connect"
+
+            android:textColor="@color/white" />
+   <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/cancelButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_bg"
+            android:backgroundTint="#7E7E7E"
+       android:text="Cancel"
 
             android:textColor="@color/white" />
 
