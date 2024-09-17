@@ -1,4 +1,4 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,14 +6,17 @@
     android:background="@color/white"
     tools:context=".MainActivity">
 
-    <ImageView
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
         android:id="@+id/receiver"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
         android:src="@drawable/logo" />
-
     <LinearLayout
         android:id="@+id/btn_lyt"
         android:layout_width="match_parent"
@@ -23,7 +26,6 @@
         android:layout_marginTop="110dp"
         android:layout_marginBottom="16dp"
         android:orientation="horizontal">
-
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/userButton"
             android:layout_width="match_parent"
@@ -33,7 +35,6 @@
             android:background="@drawable/btn_bg"
             android:text="Giver"
             android:textColor="@color/white" />
-
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/masterButton"
             android:layout_width="match_parent"
@@ -42,7 +43,6 @@
             android:layout_weight="1"
             android:background="@drawable/btn_bg_lght"
             android:text="Master User"
-
             android:textColor="@color/white" />
     </LinearLayout>
 
@@ -61,8 +61,6 @@
             android:background="@drawable/edit_bg"
             android:hint="Enter Master Password"
             android:inputType="textPassword"
-
-
             android:padding="9dp"
             android:visibility="gone" />
 
@@ -78,7 +76,6 @@
 
     </LinearLayout>
 
-    <!-- Spinner for Value Type -->
     <Spinner
         android:id="@+id/typeSpinner"
         android:layout_width="match_parent"
@@ -90,7 +87,6 @@
         android:backgroundTint="#E9E9E9"
         android:padding="5dp" />
 
-    <!-- Balance Display -->
     <TextView
         android:id="@+id/balanceTextView"
         android:layout_width="130dp"
@@ -121,7 +117,6 @@
         android:background="@drawable/btn_bg"
         android:text="Read"
         android:visibility="gone"
-
         android:textColor="@color/white" />
   <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/requestButton"
@@ -131,7 +126,6 @@
         android:background="@drawable/btn_bg"
         android:text="Request"
       android:visibility="gone"
-
       android:textColor="@color/white" />
 
     <androidx.appcompat.widget.AppCompatButton
@@ -283,13 +277,12 @@
             android:layout_gravity="center"
             android:text="Available Devices"
             android:textSize="20sp"
-
             android:textStyle="bold" />
 
         <ListView
             android:id="@+id/lvNewDevices"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="300dp"
             android:layout_marginTop="15dp" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -316,4 +309,13 @@
 
     </LinearLayout>
 
-</RelativeLayout>
+        <androidx.camera.view.PreviewView
+            android:id="@+id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="320dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:background="@android:color/darker_gray" />
+    </RelativeLayout>
+
+</ScrollView>

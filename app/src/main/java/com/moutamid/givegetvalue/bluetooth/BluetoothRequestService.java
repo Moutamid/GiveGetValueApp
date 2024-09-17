@@ -19,7 +19,6 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.fxn.stash.Stash;
 import com.moutamid.givegetvalue.MainActivity;
-import com.moutamid.givegetvalue.RequestActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -275,11 +274,11 @@ public class BluetoothRequestService {
                     Log.d(TAG, "InputStream: " + incomingMessage);
                     mainActivity.runOnUiThread(() -> {
                         if (incomingMessage.equals("confirmation")) {
-                            RequestActivity.confirmation_lyt.setVisibility(View.VISIBLE);
+                            MainActivity.confirmation_lyt.setVisibility(View.VISIBLE);
                         } else if (incomingMessage.equals("yes")) {
-                            Stash.put(RequestActivity.extractedType + "_balance", RequestActivity.currentBalance);
-                            setSpinnerToValue(RequestActivity.typeSpinner, RequestActivity.extractedType);
-                            RequestActivity.valueEditText.setText("");
+                            Stash.put(MainActivity.extractedType + "_balance", MainActivity.currentBalance);
+                            setSpinnerToValue(MainActivity.typeSpinner, MainActivity.extractedType);
+                            MainActivity.valueEditText.setText("");
                             mainActivity.startActivity(new Intent(mainActivity, MainActivity.class));
                             mainActivity.finish();
                         }
