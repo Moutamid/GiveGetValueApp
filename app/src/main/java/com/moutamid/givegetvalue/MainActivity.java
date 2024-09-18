@@ -1,7 +1,5 @@
 package com.moutamid.givegetvalue;
 
-import static androidx.core.content.ContextCompat.checkSelfPermission;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -19,10 +17,8 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.Log;
 import android.util.Size;
 import android.view.View;
@@ -97,7 +93,6 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private static final int REQUEST_CHECK_SETTINGS = 1001;
-
     private static final int CAMERA_REQUEST_CODE = 100;
     private PreviewView previewView;
     private ExecutorService cameraExecutor;
@@ -108,15 +103,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     BluetoothConnectionService mBluetoothConnection;
     BluetoothRequestService mrequestBluetoothConnection;
     String extractedDevice = "test";
-    private static final UUID MY_UUID_INSECURE =
-            UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
+    private static final UUID MY_UUID_INSECURE = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
     BluetoothDevice mBTDevice;
     public ArrayList<BluetoothDevice> mBTDevices = new ArrayList<>();
     public DeviceListAdapter mDeviceListAdapter;
     ListView lvNewDevices;
     public static String extractedValue = "";
     public static String extractedType = "";
-    ProgressDialog mProgressDialog;
+//    ProgressDialog mProgressDialog;
     private boolean isReceiver1Registered = false;
     private boolean isReceiver2Registered = false;
     private boolean isReceiver3Registered = false;
@@ -128,20 +122,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public static TextView balanceTextView;
     private Button readButton, requestButton, giveButton, addButton;
     private ImageView qrCodeImageView;
-    public static int currentBalance = 0;
+    public static double currentBalance = 0;
     private boolean isMasterUser = false;
     Button enterButton, userButton, masterButton, quitButton;
     String valueType;
     private String masterKeyAlias;
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_BLUETOOTH_PERMISSIONS_ = 200;
+    private static final int _REQUEST_BLUETOOTH_PERMISSIONS_ = 300;
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 100;
     private static final int REQUEST_BLUETOOTH_PERMISSION = 1000;
     TextView incomingTextView;
-    public  static  RelativeLayout confirmation_lyt;
+    public static RelativeLayout confirmation_lyt;
     LinearLayout available_Devices;
     Button NoButton, yesButton, connectButton, cancelButton;
-    String status="receiver";
+    String status = "receiver";
     private final BroadcastReceiver mBroadcastReceiver1 = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -209,6 +204,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (device != null) {
                     String deviceName = device.getName();
                     String deviceAddress = device.getAddress();
+                    if (deviceName == null) {
+//                        mProgressDialog = ProgressDialog.show(MainActivity.this, "Connecting Bluetooth"
+//                                , "Please Wait...", true);
+//
+//                        if (mProgressDialog != null) {
+//                            mProgressDialog.dismiss();
+//                            Toast.makeText(context, "Something went wrong, Please try again", Toast.LENGTH_SHORT).show();
+//                        }
+                    }
                     Log.d(TAG, "onReceive: Device Name: " + deviceName + " Device Address: " + deviceAddress);
                     if (deviceName != null && deviceName.equals(extractedDevice)) {
                         lvNewDevices.setVisibility(View.GONE);
@@ -225,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                 mrequestBluetoothConnection = new BluetoothRequestService(MainActivity.this, MainActivity.this, confirmation_lyt);
 
                             }
-                            mProgressDialog.dismiss();
+//                            mProgressDialog.dismiss();
                             startConnection();
                         }
                     } else {
@@ -269,7 +273,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     };
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -301,15 +304,22 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         readButton = findViewById(R.id.readButton);
         giveButton = findViewById(R.id.giveButton);
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
-        Log.d("valueeee", currentBalance + "   " + Stash.getInt("balance", 0));
-        if (Stash.getInt(valueType + "_balance", 0) == 0) {
+        Double balance = (Double) Stash.getObject(valueType + "_balance", Double.class);
+        if (balance != null) {
+            currentBalance = balance;
+        } else {
+            currentBalance = 0;
+        }
+
+        if (currentBalance == 0) {
             giveButton.setVisibility(View.GONE);
         } else {
             giveButton.setVisibility(View.VISIBLE);
         }
         checkBluetoothPermissions();
-        userButton.setBackgroundResource(R.drawable.btn_bg);  // Active state background
-        masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Inactive state background
+
+        userButton.setBackgroundResource(R.drawable.btn_bg);
+        masterButton.setBackgroundResource(R.drawable.btn_bg_lght);
         readButton.setVisibility(View.VISIBLE);
         requestButton.setVisibility(View.VISIBLE);
         checkApp(MainActivity.this);
@@ -318,12 +328,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         } else {
             typeSpinner.setSelection(Stash.getInt("position"));
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
-        } else {
-            startCamera();
-            previewView.setVisibility(View.GONE);
-        }
+
         checkLocationSettings();
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.type_array, android.R.layout.simple_spinner_item);
@@ -338,10 +343,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (position != 0) {
                     if (isMasterUser && position > 0) {
                         valueType = selectedItem;
-                        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
-                        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+                        Double balance = (Double) Stash.getObject(valueType + "_balance", Double.class);
+                        Double categoryBalance;
+                        if (balance != null) {
+                            categoryBalance = balance;
+                        } else {
+                            categoryBalance = Double.valueOf(0); // Default value or handle appropriately
+                        }
+                        // Format categoryBalance to 2 decimal places
+                        String formattedBalance = String.format("%.2f", categoryBalance);
+                        balanceTextView.setText("Balance for " + valueType + ": " + formattedBalance);
                         Log.d("BalanceDisplay", "Balance for " + valueType + ": " + categoryBalance);
-                        if (Stash.getInt(valueType + "_balance", 0) == 0) {
+                        if (categoryBalance == 0) {
                             giveButton.setVisibility(View.GONE);
                             addButton.setVisibility(View.VISIBLE);
                         } else {
@@ -351,11 +364,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                     } else {
                         String valueType = selectedItem;
-                        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
-                        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+                        Double balance = (Double) Stash.getObject(valueType + "_balance", Double.class);
+                        Double categoryBalance;
+                        if (balance != null) {
+                            categoryBalance = balance;
+                        } else {
+                            categoryBalance = Double.valueOf(0); // Default value or handle appropriately
+                        }
+
+                        // Format categoryBalance to 2 decimal places
+                        String formattedBalance = String.format("%.2f", categoryBalance);
+                        balanceTextView.setText("Balance for " + valueType + ": " + formattedBalance);
                         Log.d("BalanceDisplay", "Balance for " + valueType + ": " + categoryBalance);
 
-                        if (Stash.getInt(valueType + "_balance", 0) == 0) {
+                        if (categoryBalance == 0) {
                             giveButton.setVisibility(View.GONE);
                         } else {
                             giveButton.setVisibility(View.VISIBLE);
@@ -366,7 +388,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Handle the case where no item is selected
             }
         });
         try {
@@ -378,14 +399,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             );
-
-            // Store passwords
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("password1", "abc");
             editor.putString("password2", "DqPn9tkdbPWN");
             editor.putString("password3", "auAVMN5Qf6PH");
             editor.apply();
-
         } catch (GeneralSecurityException | IOException e) {
             Log.e("EncryptedSharedPrefs", "Exception while creating EncryptedSharedPreferences", e);
         }
@@ -419,7 +437,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     mrequestBluetoothConnection.write(bytes);
                 }
                 Stash.put(valueType + "_balance", currentBalance);
-                balanceTextView.setText("Balance for " + valueType + ": " + currentBalance);
+                String formattedBalance = String.format("%.2f", currentBalance);
+                balanceTextView.setText("Balance for " + valueType + ": " + formattedBalance);
                 valueEditText.setVisibility(View.VISIBLE);
                 passwordEditText.setVisibility(View.GONE);
                 enterButton.setVisibility(View.GONE);
@@ -434,11 +453,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 quitButton.setVisibility(View.GONE);
                 qrCodeImageView.setVisibility(View.GONE);
                 valueEditText.setText("");
-//                if (Stash.getInt(valueType + "_balance", 0) == 0) {
-//                    giveButton.setVisibility(View.GONE);
-//                } else {
                 giveButton.setVisibility(View.VISIBLE);
-//                }
             }
         });
         readButton.setOnClickListener(new View.OnClickListener() {
@@ -450,14 +465,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     startCamera();
                     previewView.setVisibility(View.VISIBLE);
                 }
-                btnEnableDisable_Discoverable();
+//                btnEnableDisable_Discoverable();
             }
         });
         quitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                userButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
-                masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Set to inactive
+                userButton.setBackgroundResource(R.drawable.btn_bg);
+                masterButton.setBackgroundResource(R.drawable.btn_bg_lght);
                 valueEditText.setVisibility(View.VISIBLE);
                 passwordEditText.setVisibility(View.GONE);
                 enterButton.setVisibility(View.GONE);
@@ -476,8 +491,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
         userButton.setOnClickListener(v -> {
-            userButton.setBackgroundResource(R.drawable.btn_bg);  // Set to active
-            masterButton.setBackgroundResource(R.drawable.btn_bg_lght);  // Set to inactive
+            userButton.setBackgroundResource(R.drawable.btn_bg);
+            masterButton.setBackgroundResource(R.drawable.btn_bg_lght);
             valueEditText.setVisibility(View.VISIBLE);
             passwordEditText.setVisibility(View.GONE);
             enterButton.setVisibility(View.GONE);
@@ -492,7 +507,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             quitButton.setVisibility(View.GONE);
             qrCodeImageView.setVisibility(View.GONE);
             valueEditText.setText("");
-//            typeSpinner.setEnabled(false);
         });
         masterButton.setOnClickListener(v -> {
             masterButton.setBackgroundResource(R.drawable.btn_bg);
@@ -524,7 +538,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (valueType != null && !valueType.isEmpty()) {
                     String valueToAddStr = valueEditText.getText().toString();
                     if (!valueToAddStr.isEmpty()) {
-                        int valueToAdd = Integer.parseInt(valueToAddStr);
+                        double valueToAdd = Double.parseDouble(valueToAddStr);
                         addValueToBalance(valueType, valueToAdd);
                     } else {
                         Toast.makeText(MainActivity.this, "Please enter a value to add", Toast.LENGTH_SHORT).show();
@@ -534,17 +548,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
         });
-        requestButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                valueType = typeSpinner.getSelectedItem().toString();
-                String valueToGive = valueEditText.getText().toString();
-                requestButton.setOnClickListener(v -> checkBluetoothPermissionsrequest_());
-
-            }
-        });
-
-
+        requestButton.setOnClickListener(v -> checkBluetoothPermissionsrequest_());
 
         enterButton.setOnClickListener(view -> addPasswordAsMaster());
 
@@ -568,8 +572,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         quitButton.setVisibility(View.VISIBLE);
         quitButton.setEnabled(false);
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled())
-        {
+        if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
@@ -580,9 +583,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String formattedDate = formatter.format(date);
         String qrData = "Type: " + valueType + ", Value: " + valueToGive + ", Device: " + deviceName + ", Timestamp: " + formattedDate + ", Status: " + "giver";
-       enableBluetooth(); generateQRCode(qrData);
-        currentBalance = Stash.getInt(valueType + "_balance");
-        currentBalance -= Integer.parseInt(valueToGive);
+        enableBluetooth();
+        generateQRCode(qrData);
+        currentBalance = (double) Stash.getObject(valueType + "_balance", double.class);
+        currentBalance -= Double.parseDouble(valueToGive);
         quitButton.setEnabled(true);
     }
 
@@ -658,33 +662,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
 
-
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Register BroadcastReceiver 1
         if (!isReceiver1Registered) {
             IntentFilter filter1 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             registerReceiver(mBroadcastReceiver1, filter1);
             isReceiver1Registered = true;
         }
-
-        // Register BroadcastReceiver 2
         if (!isReceiver2Registered) {
             IntentFilter filter2 = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
             registerReceiver(mBroadcastReceiver2, filter2);
             isReceiver2Registered = true;
         }
-
-        // Register BroadcastReceiver 3
         if (!isReceiver3Registered) {
             IntentFilter filter3 = new IntentFilter(BluetoothDevice.ACTION_FOUND);
             registerReceiver(mBroadcastReceiver3, filter3);
             isReceiver3Registered = true;
         }
-
-        // Register BroadcastReceiver 4
         if (!isReceiver4Registered) {
             IntentFilter filter4 = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
             registerReceiver(mBroadcastReceiver4, filter4);
@@ -695,9 +690,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     protected void onPause() {
         super.onPause();
-
-        // Optionally, unregister receivers here if needed, but be careful to check the flags
-        // For example:
         if (isReceiver1Registered) {
             unregisterReceiver(mBroadcastReceiver1);
             isReceiver1Registered = false;
@@ -708,45 +700,42 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void onDestroy() {
         super.onDestroy();
         cameraExecutor.shutdown();
-
-        // Unregister BroadcastReceiver 1
         if (isReceiver1Registered) {
             unregisterReceiver(mBroadcastReceiver1);
             isReceiver1Registered = false;
         }
-
-        // Unregister BroadcastReceiver 2
         if (isReceiver2Registered) {
             unregisterReceiver(mBroadcastReceiver2);
             isReceiver2Registered = false;
         }
-
-        // Unregister BroadcastReceiver 3
         if (isReceiver3Registered) {
             unregisterReceiver(mBroadcastReceiver3);
             isReceiver3Registered = false;
         }
-
-        // Unregister BroadcastReceiver 4
         if (isReceiver4Registered) {
             unregisterReceiver(mBroadcastReceiver4);
             isReceiver4Registered = false;
         }
     }
 
-    private void addValueToBalance(String valueType, int valueToAdd) {
-        int categoryBalance = Stash.getInt(valueType + "_balance", 0);
+    private void addValueToBalance(String valueType, double valueToAdd) {
+        Double balance = (Double) Stash.getObject(valueType + "_balance", Double.class);
+        Double categoryBalance;
+        if (balance != null) {
+            categoryBalance = balance;
+        } else {
+            categoryBalance = Double.valueOf(0); // Default value or handle appropriately
+        }
         Log.d("BalanceUpdate", "1   " + categoryBalance);
         categoryBalance += valueToAdd;
         Log.d("BalanceUpdate", "2   " + categoryBalance);
         Stash.put(valueType + "_balance", categoryBalance);
-        Log.d("BalanceUpdate", "3   " + Stash.getInt(valueType + "_balance", 0));
-        balanceTextView.setText("Balance for " + valueType + ": " + categoryBalance);
+        String formattedBalance = String.format("%.2f", categoryBalance);
+        balanceTextView.setText("Balance for " + valueType + ": " + formattedBalance);
         Log.d("BalanceUpdate", "Updated Balance for " + valueType + ": " + categoryBalance);
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }
-
 
 
     @Override
@@ -756,6 +745,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS_) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startGiveProcess();
+            } else {
+                Toast.makeText(this, "Bluetooth permissions are required to scan and connect to nearby devices.", Toast.LENGTH_SHORT).show();
+            }
+        }   if (requestCode == _REQUEST_BLUETOOTH_PERMISSIONS_) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startRequestProcess();
             } else {
                 Toast.makeText(this, "Bluetooth permissions are required to scan and connect to nearby devices.", Toast.LENGTH_SHORT).show();
             }
@@ -776,9 +771,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         }
         if (requestCode == CAMERA_REQUEST_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startCamera();
+
         }
     }
+
     public static String getUserId(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String userId = prefs.getString(USER_ID_KEY, null);
@@ -798,7 +794,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
                 ActivityCompat.requestPermissions(this, new String[]{
                         android.Manifest.permission.BLUETOOTH_SCAN,
                         android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -810,17 +805,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         } else {
             startGiveProcess();
         }
-    } private void checkBluetoothPermissionsrequest_() {
+    }
+
+    private void checkBluetoothPermissionsrequest_() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
                 ActivityCompat.requestPermissions(this, new String[]{
                         android.Manifest.permission.BLUETOOTH_SCAN,
                         android.Manifest.permission.BLUETOOTH_CONNECT,
                         android.Manifest.permission.ACCESS_FINE_LOCATION
-                }, REQUEST_BLUETOOTH_PERMISSIONS);
+                }, _REQUEST_BLUETOOTH_PERMISSIONS_);
             } else {
                 startRequestProcess();
             }
@@ -848,9 +844,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             } else {
                 Log.e(TAG, "BluetoothConnectionService is null.");
             }
-        }
-        else
-        {
+        } else {
             if (mrequestBluetoothConnection != null) {
                 mrequestBluetoothConnection.startClient(device, uuid);
             } else {
@@ -919,15 +913,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mBTDevice = mBTDevices.get(i);
         if (status.equals("giver")) {
             mBluetoothConnection = new BluetoothConnectionService(MainActivity.this, MainActivity.this, confirmation_lyt);
-
-        }
-        else
-        {
+        } else {
             mrequestBluetoothConnection = new BluetoothRequestService(MainActivity.this, MainActivity.this, confirmation_lyt);
-
         }
 //        }
     }
+
     public static void checkApp(Activity activity) {
         String appName = "GiverApp";
 
@@ -1051,7 +1042,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         available_Devices.setVisibility(View.VISIBLE);
                         dialog.dismiss();
                     }
-                }) .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Dismiss the dialog
@@ -1060,6 +1051,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 })
                 .show();
     }
+
 
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -1097,14 +1089,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
     }
 
+
     private void processImageProxy(ImageProxy imageProxy) {
         @SuppressWarnings("ConstantConditions")
         InputImage inputImage = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
 
         barcodeScanner.process(inputImage)
                 .addOnSuccessListener(barcodes -> {
+
                     for (Barcode barcode : barcodes) {
                         String qrCodeValue = barcode.getRawValue();
+
                         readButton.setVisibility(View.VISIBLE);
                         String[] parts = qrCodeValue.split(", ");
                         extractedType = "";
@@ -1124,29 +1119,38 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             }
                         }
                         if (status.equals("giver")) {
-                            currentBalance = Stash.getInt(extractedType + "_balance");
-                            currentBalance += Integer.parseInt(extractedValue);
+
+                            Double balance = (Double) Stash.getObject(extractedType + "_balance", Double.class);
+                            if (balance != null) {
+                                currentBalance = balance;
+                            } else {
+                                // Handle the case where balance is null
+                                currentBalance = Double.valueOf(0); // Default value
+                                Log.d("BalanceCheck", "Balance was null, setting to default value of 0.");
+                            }
+
+                            currentBalance += Double.parseDouble(extractedValue);
                             valueEditText.setText(extractedValue);
                             System.out.println("Device: " + extractedDevice);
                             previewView.setVisibility(View.GONE);
                             System.out.println("Timestamp: " + status);
                             Stash.put("type", "reader");
                             btnDiscover();
-                            mProgressDialog = ProgressDialog.show(MainActivity.this, "Connecting Bluetooth"
-                                    , "Please Wait...", true);
+//                            mProgressDialog = ProgressDialog.show(MainActivity.this, "Connecting Bluetooth"
+//                                    , "Please Wait...", true);
                         } else {
-                            currentBalance = Stash.getInt(extractedType + "_balance");
-                            currentBalance -= Integer.parseInt(extractedValue);
-//                valueEditText.setText(extractedValue);
-//                    typeSpinner.setSelection(Integer.parseInt(extractedType));
-//                balanceTextView.setText("Balance: " + extractedValue);
-                            System.out.println("Device: " + extractedDevice);
-//                giveButton.setVisibility(View.GONE);
+                            Double balance = (Double) Stash.getObject(extractedType + "_balance", Double.class);
+                            if (balance != null) {
+                                currentBalance = balance;
+                            } else {
+                                currentBalance = Double.valueOf(0); // Default value or handle appropriately
+                            }
+                            currentBalance -= Double.parseDouble(extractedValue);
                             System.out.println("Timestamp: " + extractedTimestamp);
                             Stash.put("type", "reader");
                             btnDiscover();
-                            mProgressDialog = ProgressDialog.show(MainActivity.this, "Connecting Bluetooth"
-                                    , "Please Wait...", true);
+//                            mProgressDialog = ProgressDialog.show(MainActivity.this, "Connecting Bluetooth"
+//                                    , "Please Wait...", true);
                         }
                         break;
 
@@ -1157,6 +1161,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 })
                 .addOnCompleteListener(task -> imageProxy.close());
     }
+
     private void startRequestProcess() {
         valueType = typeSpinner.getSelectedItem().toString();
         String valueToGive = valueEditText.getText().toString();
@@ -1170,6 +1175,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         readButton.setVisibility(View.GONE);
         requestButton.setVisibility(View.GONE);
+        giveButton.setVisibility(View.GONE);
         quitButton.setVisibility(View.VISIBLE);
         quitButton.setEnabled(false);
 
@@ -1193,10 +1199,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 //        quitButton.setEnabled(true);
 
         // TODO after confirmation
-        currentBalance = Stash.getInt(valueType + "_balance");
-        currentBalance += Integer.parseInt(valueToGive);
+        currentBalance = (double) Stash.getObject(valueType + "_balance", double.class);
+        ;
+        currentBalance += Double.parseDouble(valueToGive);
         quitButton.setEnabled(true);
     }
+
     private void checkLocationSettings() {
         // Create a LocationRequest with high accuracy
         LocationRequest locationRequest = new LocationRequest.Builder(

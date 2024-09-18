@@ -281,7 +281,9 @@ public class BluetoothConnectionService {
                             confirmation_lyt.setVisibility(View.VISIBLE);
                         } else if (incomingMessage.equals("yes")) {
                             Stash.put(extractedType + "_balance", currentBalance);
-                            MainActivity.balanceTextView.setText("Balance for " + extractedType + ": " + currentBalance);
+                            // Format categoryBalance to 2 decimal places
+                            String formattedBalance = String.format("%.2f", currentBalance);
+                            MainActivity.balanceTextView.setText("Balance for " + extractedType + ": " + formattedBalance);
                             setSpinnerToValue(MainActivity.typeSpinner, extractedType);
                             MainActivity.valueEditText.setText("");
                         }
@@ -351,6 +353,9 @@ public class BluetoothConnectionService {
                 public void onClick(DialogInterface dialog, int which) {
                     byte[] bytes = "confirmation".getBytes(Charset.defaultCharset());
                     write(bytes);
+                    if (mProgressDialog.isShowing()) {
+                        mProgressDialog.dismiss();
+                    }
                     dialog.dismiss();
                 }
             });
