@@ -17,7 +17,24 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
         android:src="@drawable/logo" />
-    <LinearLayout
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:visibility="gone"
+            ><TextView
+            android:id="@+id/tvLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:padding="16dp"
+            android:scrollbars="vertical"
+            android:background="#f5f5f5"
+            android:textColor="#000"
+            android:maxLines="10"
+            />
+        </ScrollView>
+
+        <LinearLayout
         android:id="@+id/btn_lyt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
